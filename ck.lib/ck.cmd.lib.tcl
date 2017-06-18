@@ -126,6 +126,7 @@ proc ::ck::cmd::floodcheck {id} {
     return 0
   }
 }
+
 proc ::ck::cmd::cmd {args} {
   cmdargs \
     register       ::ck::cmd::register \
@@ -135,10 +136,12 @@ proc ::ck::cmd::cmd {args} {
     unregister     ::ck::cmd::unregister \
     invoke         ::ck::cmd::invoke_cmd
 }
+
 proc ::ck::cmd::regdoc_handler { aproc } {
   variable doc_handler
   set doc_handler $aproc
 }
+
 proc ::ck::cmd::regdoc { args } {
   variable cmddoc
   getargs \
@@ -165,6 +168,7 @@ proc ::ck::cmd::regdoc { args } {
   set cmddoc($id) $_
   foreach_ $(alias) { set cmddoc($_) [list $_ $_ $id $(author) $(link)] }
 }
+
 proc ::ck::cmd::regfilter { fid fproc args } {
   variable filters
   variable bindmask
@@ -191,6 +195,7 @@ proc ::ck::cmd::regfilter { fid fproc args } {
   set filters($fid) [array get tflt]
   array init bindmask
 }
+
 # register command.id procedure \
 #   -bind -bindpub -bindmsg -binddcc
 #     биндит на слово
@@ -313,6 +318,7 @@ proc ::ck::cmd::unregister {id} {
   unset cmds($id)
   array init bindmask
 }
+
 proc ::ck::cmd::updatebinds { type { target "" } } {
   variable bindmask
   variable filters
@@ -401,6 +407,7 @@ proc ::ck::cmd::updatebinds { type { target "" } } {
   set bindmask([list "filt 0$type $target"]) $filtres0
   set bindmask([list "filt 1$type $target"]) $filtres1
 }
+
 proc ::ck::cmd::searchcmd { vart type { tg "" } } {
   variable bindmask
   upvar $vart t
@@ -419,6 +426,7 @@ proc ::ck::cmd::searchcmd { vart type { tg "" } } {
   if { [llength $match] == 0 } return
   return [lindex [lindex [lsort -integer -index 0 $match] end] 1]
 }
+
 proc ::ck::cmd::applyfilter { CmdEvent precmd {Channel ""} } {
   variable bindmask
   if { ![info exists bindmask([list "filt $precmd$CmdEvent $Channel"])] } { updatebinds $CmdEvent $Channel }
@@ -447,6 +455,7 @@ proc ::ck::cmd::applyfilter { CmdEvent precmd {Channel ""} } {
   }
   return 0
 }
+
 proc ::ck::cmd::checkaccess { {ret ""} } {
   upvar sid sid
   session import -exact CmdAccess
@@ -473,6 +482,7 @@ proc ::ck::cmd::checkaccess { {ret ""} } {
   }
   return 1
 }
+
 proc ::ck::cmd::invoke_cmd { args } {
   variable cmds
   getargs \
@@ -520,6 +530,7 @@ proc ::ck::cmd::invoke_cmd { args } {
   # на доступ к команде и autousage проверки нет, предполагается что если делается invoke, тогда все проверки уже сделаны
   session event CmdPass
 }
+
 proc ::ck::cmd::prossed_cmd { CmdEvent Nick UserHost Handle Channel Text CmdId {CmdDCC ""} {CmdEventMark ""} } {
   variable cmds
   array set tcmd $cmds($CmdId)
@@ -547,6 +558,7 @@ proc ::ck::cmd::prossed_cmd { CmdEvent Nick UserHost Handle Channel Text CmdId {
     session event CmdPass
   }
 }
+
 proc ::ck::cmd::cmdlog { {status ""} } {
   foreach_ {Nick Channel CmdEvent StdArgs CmdId UserHost} { upvar $_ $_ }
   if { $status ne "" } { set status [format {(%s)} $status] }
@@ -567,6 +579,7 @@ proc ::ck::cmd::cmdlog { {status ""} } {
   putloglev c ## $m
   foreach_ $rpl { ::console $_ +c }
 }
+
 proc ::ck::cmd::replydoc { args } {
   variable doc_handler
   variable cmddoc
@@ -596,17 +609,20 @@ proc ::ck::cmd::replydoc { args } {
   reply "%s" [cmark [lindex $cmddoc([lindex $stoplist end]) 2]]
   return -code return
 }
+
 proc ::ck::cmd::makepfix { cmd isaction targlist } {
   set maxret [set max 510]
+  set lengthcmd [expr { $::ck::ircencoding eq "utf-8"?"bytelength":"length" }]
   foreach_ $targlist {
-    set maxret [min $maxret [expr { $max - [string length [format ":%s %s %s :" $::botname $cmd $_]] }]]
+    set maxret [min $maxret [expr { $max - [string $lengthcmd [format ":%s %s %s :" $::botname $cmd $_]] }]]
   }
   set pfix [format "%s %s :" $cmd [join $targlist ,]]
   if { $isaction && $cmd eq "PRIVMSG" } {
     append pfix "\001ACTION "; set postfix "\001"
   } else { set postfix "" }
-  return [list $pfix [min $maxret [expr { $max - [string length $pfix] }]] $postfix]
+  return [list $pfix [min $maxret [expr { $max - [string $lengthcmd $pfix] }]] $postfix]
 }
+
 proc ::ck::cmd::colorstrip { cmdconf txt targtype {targ ""} } {
   upvar sid sid
   foreach cfgpfix [list ".${cmdconf}." ""] {
@@ -633,6 +649,7 @@ proc ::ck::cmd::colorstrip { cmdconf txt targtype {targ ""} } {
   }
   return $txt
 }
+
 proc ::ck::cmd::reply { args } {
   upvar sid sid
   session import CmdReplyParam*
@@ -737,6 +754,7 @@ proc ::ck::cmd::reply { args } {
   }
   if { $(return) || (!$(noreturn) && $(err)) } { return -code return } return
 }
+
 proc ::ck::cmd::pubm { n uh h tg t } {
   fixenc n uh h tg t
   if { [applyfilter pub 0 $tg] } return
@@ -746,6 +764,7 @@ proc ::ck::cmd::pubm { n uh h tg t } {
     applyfilter pub 1 $tg
   }
 }
+
 proc ::ck::cmd::msgm { n uh h t } {
   fixenc n uh h t
   if { [applyfilter msg 0 *] } return
@@ -755,6 +774,7 @@ proc ::ck::cmd::msgm { n uh h t } {
     applyfilter msg 1 *
   }
 }
+
 proc ::ck::cmd::filt { i t } {
   set enc [::getuser [::idx2hand $i] XTRA _ck.core.encoding]
   if { $enc eq "" || [string length $enc] == 1 } {
@@ -787,6 +807,7 @@ proc ::ck::cmd::filt { i t } {
   prossed_cmd dcc $n $uh $n [lindex [console $i] 0] $t $cmdid $i
   return ""
 }
+
 proc ::ck::cmd::getfrm { afrm {defs ""}} {
   upvar sid sid
   session import -exact CmdNamespace CmdId
@@ -799,10 +820,12 @@ proc ::ck::cmd::getfrm { afrm {defs ""}} {
   }
   return $defs
 }
+
 proc ::ck::cmd::rawformat { frmid } {
   upvar sid sid
   return [getfrm $frmid -]
 }
+
 proc ::ck::cmd::cformat { args } {
   upvar sid sid
   set frm [getfrm [lindex $args 0] -]
@@ -822,6 +845,7 @@ proc ::ck::cmd::cformat { args } {
   }
   return [MAGIC $frm]
 }
+
 proc ::ck::cmd::cjoin { list frm } {
   upvar sid sid
   set frm [getfrm $frm -]
@@ -831,14 +855,17 @@ proc ::ck::cmd::cjoin { list frm } {
   }
   return [MAGIC [join $xlist $frm]]
 }
+
 proc ::ck::cmd::MAGIC { str } {
   variable MAGIC
   return "$MAGIC$str"
 }
+
 proc ::ck::cmd::cmark { str } {
   variable MAGIC
   return "$MAGIC$str"
 }
+
 proc ::ck::cmd::stripMAGIC { str {esc 0}} {
   variable MAGIC
   variable MAGIClength
@@ -849,9 +876,11 @@ proc ::ck::cmd::stripMAGIC { str {esc 0}} {
   }
   return $str
 }
+
 proc ::ck::cmd::cquote { str } {
   return [string map [list {&} {&&}] $str]
 }
+
 proc ::ck::cmd::cmdchans { cmdid } {
   variable cmds
 
@@ -863,6 +892,7 @@ proc ::ck::cmd::cmdchans { cmdid } {
   set chans [lfilter -nocase -keep -- $chans $allow]
   return $chans
 }
+
 proc ::ck::cmd::cmd_checkchan { cmdid chan } {
   variable cmds
   array set tcmd $cmds($cmdid)
@@ -882,6 +912,7 @@ proc ::ck::cmd::cmd_checkchan { cmdid chan } {
 #  debug "default - disable."
   return 0
 }
+
 proc ::ck::cmd::stripcolor2array { data } {
   array set ret {}
   set curdest ""
@@ -901,11 +932,13 @@ proc ::ck::cmd::cfg_resetbinds { args } {
   array init ::ck::cmd::bindmask
   return
 }
+
 proc ::ck::cmd::cfg_msgmode { mode var oldv newv hand } {
   if { ![string equal -length 3 $mode "set"] || \
     [lexists "fast quick serv help" $newv] } return
   return [list 2 "MsgMode must be one of <fast>, <quick>, <serv> or <help>."]
 }
+
 proc ::ck::cmd::cfg_stripcolor { mode var oldv newv hand } {
   if { ![string equal -length 3 $mode "set"] } return
   if { $newv ne "" } {

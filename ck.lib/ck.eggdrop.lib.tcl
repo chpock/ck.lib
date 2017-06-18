@@ -71,21 +71,21 @@ proc ::ck::eggdrop::putquick { txt args } {
 #  debug "out:%s:%s:" [string length $txt] [string bytelength $txt]
   backenc txt args
 #  debug "after:%s:%s:" [string length $txt] [string bytelength $txt]
-  set txt [string range $txt 0 499]
+  set txt [string range $txt 0 509]
   eval [concat [list ::putquick $txt] $args]
 }
 proc ::ck::eggdrop::putserv { txt args } {
 #  debug "out:%s:%s:" [string length $txt] [string bytelength $txt]
   backenc txt args
 #  debug "after:%s:%s:" [string length $txt] [string bytelength $txt]
-  set txt [string range $txt 0 499]
+  set txt [string range $txt 0 509]
   eval [concat [list ::putserv $txt] $args]
 }
 proc ::ck::eggdrop::puthelp { txt args } {
 #  debug "out:%s:%s:" [string length $txt] [string bytelength $txt]
   backenc txt args
 #  debug "after:%s:%s:" [string length $txt] [string bytelength $txt]
-  set txt [string range $txt 0 499]
+  set txt [string range $txt 0 509]
   eval [concat [list ::puthelp $txt] $args]
 }
 proc ::ck::eggdrop::userlevel { hand {chan ""} {chanonly ""} } {

@@ -135,6 +135,7 @@ proc ::ck::colors::stripformat { text } {
 proc ::ck::colors::splittext { args } {
   set txt [split [lindex $args end] {}]
   set args [lrange $args 0 end-1]
+  set lengthcmd [expr { $::ck::ircencoding eq "utf-8"?"bytelength":"length" }]
   getargs -width int 80 -minwords int 3 -maxlines int 0 -line int -1
 
   if { $(line) != -1 } {
@@ -211,7 +212,7 @@ proc ::ck::colors::splittext { args } {
       if { $sv(u) } { append x "\037" }
       if { $sv(r) } { append x "\026" }
       set lastwstart [string length $x]
-      set curwidth [string length [set current [append x $current]]]
+      set curwidth [string $lengthcmd [set current [append x $current]]]
       unset x
       set wcount 1
     }
@@ -231,7 +232,11 @@ proc ::ck::colors::splittext { args } {
       set lastwstart [string length $current]
       incr wcount
     }
-    incr curwidth $slen
+    if { $type eq "w" } {
+      incr curwidth [string $lengthcmd $_]
+    } {
+      incr curwidth $slen
+    }
     append current $_
   }
   if { $current ne "" } { lappend result $current }
