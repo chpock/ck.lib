@@ -40,17 +40,17 @@ proc ::ck::eggdrop::idx2flags {idx} {
 proc ::ck::eggdrop::putidx {idx txt} {
   if { [string exists "T" [idx2flags $idx]] } { set txt [string strongspace [color mirc2ansi $txt]] }
   if { [catch {::getuser [::idx2hand $idx] XTRA _ck.core.encoding} enc] || [string length $enc] < 2 } {
-    ::putidx $idx [backencstr $txt]\r
+    ::putidx $idx [backencstr $txt]
   } elseif { [info exists ::sp_version] } {
     if { [string equal -nocase [set x [encoding system]] [set enc [string range $enc 1 end]]] } {
-      ::putidx $idx $txt\r
+      ::putidx $idx $txt
     } {
       encoding system $enc
-      ::putidx $idx $txt\r
+      ::putidx $idx $txt
       encoding system $x
     }
   } {
-    ::putidx $idx [encoding convertto [string range $enc 1 end] $txt]\r
+    ::putidx $idx [encoding convertto [string range $enc 1 end] $txt]
   }
 }
 proc ::ck::eggdrop::makeproc { args } {

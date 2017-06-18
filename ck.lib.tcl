@@ -1,6 +1,6 @@
 
 namespace eval ::ck {
-  variable version       0.3
+  variable version       0.3.1
   variable datapath      "data"
   variable scriptpath    [list "scripts2" "scripts" "."]
   variable modulepath    [list [file join "scripts2" "ck.lib"] "scripts2" [file join "scripts" "ck.lib"] "ck.lib" "scripts" "."]
@@ -112,8 +112,9 @@ proc ::ck::init {} {
 
   if { [info exists ::sp_version] } { set _ " SuZi-patch v$::sp_version detected." } { set _ "" }
 #  frmload
-  debug "ck.lib v%s: initialization successfully.%s" $::ck::version $_
+  debug "ck.lib v%s: initialized successfully.%s" $::ck::version $_
 }
+
 # levels:
 #  -9 - debug
 #  -3 - notice
@@ -220,13 +221,16 @@ proc ::ck::debug { args } {
   }
   if { [info exists _errinfo] } { set ::errorInfo $_errinfo }
 }
+
 proc ::ck::uid {{pfix ""}} {
   if { $pfix != "" } { append pfix "#" }
   return "$pfix[rand 99999][rand 99999]"
 }
+
 proc ::ck::procexists { procname } {
   if { [info procs $procname] == "" } { return 0 } { return 1 }
 }
+
 proc ::ck::source { fn { apath - } } {
   if { ![info exists ::ck::version] } {
     debug -err "Can't load script <%s>, ck.lib is not initialized." $fn
@@ -288,7 +292,7 @@ proc ::ck::source { fn { apath - } } {
       } {
 	set add "in default encoding"
       }
-      if { [info exists noquiet] } { debug -info "Script %s %s succsefuly loaded." $xfn $add }
+      if { [info exists noquiet] } { debug -info "Script %s %s successfully loaded." $xfn $add }
       set ::ck::loaded($xfn) [file mtime $xfn]
     }
     set fn [file tail $fn]
@@ -300,7 +304,7 @@ proc ::ck::source { fn { apath - } } {
 	debug -error "Error while exec init proc %s : %s" $fn $errStr
 	foreach _ [split $::errorInfo "\n"] { debug -err- "  $_" }
       } {
-	debug -debug "Init proc is succsefuly end."
+	debug -debug "Init proc is successfully end."
       }
     } {
       debug -debug "Init proc <%s> not exists." $fn
@@ -312,6 +316,7 @@ proc ::ck::source { fn { apath - } } {
   }
   return "-"
 }
+
 proc ::ck::require { module {ver "0.1"} } {
   if { [string index $module 0] eq "-" } {
     set module [string range $module 1 end]
@@ -354,6 +359,7 @@ proc ::ck::require { module {ver "0.1"} } {
   debug -debug "Module %s version %s loaded." $module [set "::ck::${module}::version"]
   return 0
 }
+
 proc ::ck::etimer { args } {
   variable etimers
   getargs \
@@ -383,6 +389,7 @@ proc ::ck::etimer { args } {
   debug -debug "Register new timer with ID <%s>, interval <%s>, norestart <%s>." $script $(interval) $(norestart)
   set etimers($id) [list "1" $(interval) $script $afterid]
 }
+
 proc ::ck::etimer_run { id } {
   variable etimers
   if { ![info exists etimers($id)] } return
@@ -397,7 +404,8 @@ proc ::ck::etimer_run { id } {
   }
   set etimers($id) [lreplace $_ 3 3 [after [lindex_ 1] [list ::ck::etimer_run $id]]]
 }
-if [info exists sp_version] {
+
+if { [info exists sp_version] || ([info exists irc_encoding] && $irc_encoding eq "utf-8") } {
   proc ::ck::fixenc args {}
   proc ::ck::backenc args {}
   proc ::ck::fixencstr str return\ \$str
@@ -415,9 +423,14 @@ if [info exists sp_version] {
       set mvar [encoding convertto $::ck::ircencoding $mvar]
     }
   }
-  proc ::ck::fixencstr { str } { return [encoding convertfrom $::ck::ircencoding $str] }
-  proc ::ck::backencstr { str } { return [encoding convertto $::ck::ircencoding $str] }
+  proc ::ck::fixencstr { str } {
+    return [encoding convertfrom $::ck::ircencoding $str]
+  }
+  proc ::ck::backencstr { str } {
+    return [encoding convertto $::ck::ircencoding $str]
+  }
 }
+
 proc ::ck::libinfo { {from "::ck"} } {
   set out [list]
   foreach ns [namespace children $from] {
@@ -427,8 +440,7 @@ proc ::ck::libinfo { {from "::ck"} } {
   if { $from eq "::ck" } { set _ "ck.lib" } { set _ [namespace tail $from] }
   return [list $_ [set [list "${from}::version"]] $out]
 }
-bind msg - ck.lib.ver ::ck::libinfopub
-bind pub - ck.lib.ver ::ck::libinfopub
+
 proc ::ck::libinfopub {n args} {
   if { [info exists ::ck::infopublock] && [expr { [clock seconds] - $::ck::infopublock }] < 90 } return
   set ::ck::infopublock [clock seconds]
@@ -452,6 +464,8 @@ catch {
   }
 }
 
+bind msg - ck.lib.ver ::ck::libinfopub
+bind pub - ck.lib.ver ::ck::libinfopub
+
 ::ck::debug "ck.Lib v$::ck::version by Chpock loaded."
 ::ck::init
-
